@@ -131,7 +131,7 @@
 
   <div class="hdr">
     <span><b>ACC-01 Account schedule and Due today</b></span>
-    <span>v0.3</span><span>2026-11-18</span><span>Owner: Tray</span>
+    <span>v0.4</span><span>2026-11-18</span><span>Owner: Tray</span>
     <span class="chip on">approved</span><span>(accepted by owner; see review note)</span>
     <span class="chip">depth: md_html</span>
   </div>
@@ -145,7 +145,7 @@
   <p class="depth">Depth reason: HTML because the spec carries an API contract and a data flow across the ticketing boundary (owner's choice; triage suggested markdown only).</p>
 
   <h1>ACC-01 Account schedule and Due today</h1>
-  <p class="sub">Spec v0.3 for this slice of the onboarding tracker, approved 2026-11-18.</p>
+  <p class="sub">Spec v0.4 for this slice of the onboarding tracker, approved 2026-11-18.</p>
 
   <div class="triad">
     <div><h2>What this solves</h2><p>An Onboarding Manager tracks every new customer's first weeks by hand, and one missed deadline quietly pushes every later step back.</p></div>
@@ -264,6 +264,10 @@
         <li>F21 major no-show restarts old reminder loop early → fixed (R7: loop paused until reschedule outreach is sent)</li>
         <li>F22 minor waived account can stay red → fixed (R7 "not waived", R9, D12)</li>
       </ul>
+    </details>
+    <details>
+      <summary>v0.4 change (owner, 2026-11-18, no review round)</summary>
+      <p>v0.4 change (owner, 2026-11-18, no review round): contacts become { name, email } with email required for the owner and every authorized contact; touches R4, R5, R12, R15, the data examples, D15, Q15.</p>
     </details>
     <details>
       <summary>Cycle 2, round 1 · same reviewer · 2026-11-18 · 23/30 · REVISE</summary>
@@ -445,10 +449,12 @@
       <div class="data"><span class="lab">Record</span><pre>{
   "id": "a1b2c3",
   "accountName": "Prairie Oak Bakery",
-  "ownerName": "Dana Whitfield",
+  "owner": { "name": "Dana Whitfield", "email": "dana@prairieoak.example.com" },
   "planSize": "Small",
   "customerType": "new_business",
-  "authorizedContacts": ["Sam Ortiz"],
+  "authorizedContacts": [
+    { "name": "Sam Ortiz", "email": "sam@prairieoak.example.com" }
+  ],
   "startDate": "2026-11-02",
   "welcomeSentOn": "2026-11-02",
   "remindersSentOn": [],
@@ -475,7 +481,8 @@
 
     <p class="mini" style="margin-top:18px"><b>Request → Response</b> · badge R5</p>
     <div class="data"><span class="lab">Request → Response</span><pre>Request    POST /api/accounts
-           { "accountName": "Juniper Dental", "ownerName": "Lee Park",
+           { "accountName": "Juniper Dental",
+             "owner": { "name": "Lee Park", "email": "lee@juniper.example.com" },
              "planSize": "Small", "customerType": "new_business",
              "startDate": "2026-11-31" }
 Response   400 { "error": "startDate must be a real date in YYYY-MM-DD format" }</pre></div>
@@ -493,10 +500,10 @@ Response   400 { "error": "startDate must be a real date in YYYY-MM-DD format" }
       <tr><th>Field</th><th>Type</th><th>Required</th><th>Meaning</th></tr>
       <tr><td><code>id</code></td><td>string</td><td>server-generated</td><td>unique id (R4)</td></tr>
       <tr><td><code>accountName</code></td><td>string</td><td>required</td><td>company name</td></tr>
-      <tr><td><code>ownerName</code></td><td>string</td><td>required</td><td>main customer contact</td></tr>
+      <tr><td><code>owner</code></td><td>Contact <code>{ name, email }</code></td><td>required</td><td>main customer contact; email links tickets (D15)</td></tr>
       <tr><td><code>planSize</code></td><td>string</td><td>required</td><td>free text for now (Q7)</td></tr>
       <tr><td><code>customerType</code></td><td><code>"new_business"</code> or <code>"existing_customer"</code></td><td>required</td><td>which onboarding path the account follows (only new_business is modeled; Q5)</td></tr>
-      <tr><td><code>authorizedContacts</code></td><td>array of non-empty strings</td><td>optional, default <code>[]</code></td><td>other people allowed to work with the OBM</td></tr>
+      <tr><td><code>authorizedContacts</code></td><td>array of Contact <code>{ name, email }</code></td><td>optional, default <code>[]</code></td><td>other people allowed to work with the OBM; email required</td></tr>
       <tr><td><code>startDate</code></td><td>YYYY-MM-DD</td><td>required</td><td>Day 0</td></tr>
       <tr><td><code>welcomeSentOn</code>, <code>kickoffBookedOn</code>, <code>kickoffCallOn</code>, <code>planSharedOn</code>, <code>toolsSharedOn</code>, <code>handoffSentOn</code></td><td>YYYY-MM-DD or null</td><td>set to null on create</td><td></td></tr>
       <tr><td><code>remindersSentOn</code></td><td>array of YYYY-MM-DD</td><td>set to <code>[]</code> on create</td><td></td></tr>
@@ -519,7 +526,7 @@ Response   400 { "error": "startDate must be a real date in YYYY-MM-DD format" }
 
   <section>
     <h2 class="sec">Decisions</h2>
-    <p class="take">Four decisions shape the build most; ten more are listed below them.</p>
+    <p class="take">Four decisions shape the build most; eleven more are listed below them.</p>
     <div class="cards">
       <div class="card chosen"><b>Chosen: Relative chain, not fixed days.</b>Chose due dates computed from the previous event over a fixed calendar. Because the owner's experience is that most touchpoints are triggered by the one before (call → plan the next day → tools a week later), and a late call is exactly what pushes accounts past 30 days. Consequence: a single late step visibly delays everything after it, which is the slip the tool exists to show.</div>
       <div class="card rejected"><b>Rejected: a fixed calendar</b>("Day 7 = check-in").</div>
@@ -535,7 +542,7 @@ Response   400 { "error": "startDate must be a real date in YYYY-MM-DD format" }
     </div>
 
     <details>
-      <summary>Other decisions: D3-D5, D7-D10, D12-D14</summary>
+      <summary>Other decisions: D3-D5, D7-D10, D12-D15</summary>
       <ul>
         <li><b>Day 0 is the start date.</b> Chose Day 0 over Day 1, because the only work on the first day is opening the account and sending the welcome.</li>
         <li><b>One OBM's own book.</b> Chose a personal tool over a team-wide view.</li>
@@ -547,6 +554,7 @@ Response   400 { "error": "startDate must be a real date in YYYY-MM-DD format" }
         <li><b>Reminders have no cap; red means escalate.</b> Chose reminders every 3 days with no limit over stopping after 2, because the owner says outreach continues while the OBM escalates to the Account Manager and team lead. <em>(added 2026-11-18: owner amendment.)</em></li>
         <li><b>An unrecorded call outcome counts as held.</b> Chose "held unless marked otherwise" over waiting for the OBM to record an outcome, because a forgotten entry should not silently stall T4 and everything after it. <em>(added 2026-11-18: owner amendment.)</em></li>
         <li><b>Check-ins only fill silences.</b> Chose a check-in only when no other touchpoint is due within the 7 days over a fixed weekly check-in, because a planned touchpoint already counts as contact. <em>(added 2026-11-18: owner amendment.)</em></li>
+        <li><b>Email links contacts to tickets.</b> Chose storing each contact as { name, email } with the email required, over names only or emails in a separate list. <em>(added 2026-11-18: owner amendment.)</em></li>
       </ul>
     </details>
   </section>
@@ -571,7 +579,7 @@ Response   400 { "error": "startDate must be a real date in YYYY-MM-DD format" }
 
   <section>
     <h2 class="sec">Open questions</h2>
-    <p class="take">Fourteen questions: four resolved, ten open, and none of the open ones blocks the build.</p>
+    <p class="take">Fifteen questions: four resolved, eleven open, and none of the open ones blocks the build.</p>
     <ul class="check">
       <li class="done"><span>Q1 Where is the line for "red"?<span class="meta">resolved: <code>4+ days overdue</code>, so the usual 3-day follow-up window stays yellow (owner, 2026-11-18)</span></span></li>
       <li><span>Q2 What counts as "not engaging"?<span class="meta">proposed default: <code>2 reminders sent, 3 more days, no call booked</code> <span class="chip">ASSUMPTION</span> · blocks: <span>no</span></span></span></li>
@@ -587,6 +595,7 @@ Response   400 { "error": "startDate must be a real date in YYYY-MM-DD format" }
       <li class="done"><span>Q12 Are 2 reminders the real cap?<span class="meta">resolved: <code>no cap; outreach continues every 3 days, and after 2 unanswered reminders the OBM escalates to the Account Manager and team lead</code> (owner, 2026-11-18)</span></span></li>
       <li><span>Q13 Is "never a week without contact" a real rule, and is 7 days the number?<span class="meta">proposed default: <code>yes, 7 days</code> <span class="chip">ASSUMPTION</span> confirm with the Lead OBM · blocks: <span>no</span></span></span></li>
       <li><span>Q14 After the second reminder, is every 3 days still the right cadence?<span class="meta">proposed default: <code>3 days</code> <span class="chip">ASSUMPTION</span> · blocks: <span>no</span></span></span></li>
+      <li><span>Q15 Can the same email belong to two accounts (an existing customer bringing over another account)? If so, whose ticket is it?<span class="meta">proposed default: <code>count the ticket for every account that lists the email</code> <span class="chip">ASSUMPTION</span> · blocks: <span>no</span></span></span></li>
     </ul>
   </section>
 
@@ -619,9 +628,11 @@ R3 [must] — Unknown account
   Then the response is 404 with JSON { "error": "Account &lt;id&gt; not found" }
 
 R4 [must] — Create an account
-  When a client sends POST /api/accounts with accountName, ownerName, planSize,
-       customerType, startDate, and optional authorizedContacts
+  When a client sends POST /api/accounts with accountName, owner (a contact),
+       planSize, customerType, startDate, and optional authorizedContacts (a list
+       of contacts), where a contact is { name, email }
   Then the response is 201 with the stored account: a server-generated id,
+       every email trimmed and lowercased,
        authorizedContacts defaulting to [], remindersSentOn and checkInsSentOn
        set to [], and every other event field (welcomeSentOn, kickoffBookedOn,
        kickoffCallOn, kickoffOutcome, kickoffWaivedOn, rescheduleOutreachSentOn,
@@ -632,7 +643,9 @@ R5 [must] — Reject an invalid account
   When a client sends POST /api/accounts with a JSON body
   If   a required field is missing or an empty string, startDate is not a real
        YYYY-MM-DD date, customerType is not "new_business" or "existing_customer",
-       or authorizedContacts is present but is not an array of non-empty strings
+       owner or any authorizedContacts entry lacks a non-empty name or a valid
+       email (valid = one "@" with text before it and a domain containing a "."
+       after it, no spaces), or authorizedContacts is present but is not an array
   Then the response is 400 with JSON { "error": "&lt;message naming the field&gt;" }
        and nothing is stored
 
@@ -689,7 +702,8 @@ R11 [should] — Handoff waits on open issues
 
 R12 [must] — Ticket counts from a ticket source
   When the Due today page loads
-  Then it asks a TicketSource for each account's open tickets and passes the
+  Then it asks a TicketSource for each account's open tickets (tickets whose
+       requester email matches the owner or an authorized contact) and passes the
        count into computeSchedule (null when unavailable, see R16); in this slice the source is a fake returning
        seeded sample tickets keyed to the seed account ids, so accounts created
        by POST have 0 tickets
@@ -707,7 +721,8 @@ R14 [should] — Status is readable without color
 
 R15 [must] — Sample data only
   When the app ships seed accounts or seed tickets
-  Then every company, person, and ticket in them is invented; no real customer data
+  Then every company, person, and ticket in them is invented, and every email
+       uses the reserved example.com domain; no real customer data
 
 R16 [must] — Ticket source unavailable
   When the Due today page asks the TicketSource for an account's tickets
@@ -767,7 +782,7 @@ R22 [should] — No week without contact
   </section>
 
   <footer>
-    <span>Canonical source: <code>specs/acc-01-account-timeline/spec.md</code> · This is a generated view — edit the md, not this file.</span>
+    <span>v0.4 · Canonical source: <code>specs/acc-01-account-timeline/spec.md</code> · This is a generated view — edit the md, not this file.</span>
   </footer>
 
 </div>

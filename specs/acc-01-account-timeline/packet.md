@@ -1,4 +1,4 @@
-# Render packet — ACC-01 v0.3 (2026-11-18)
+# Render packet — ACC-01 v0.4 (2026-11-18)
 
 v0.3 update: re-read spec.md in full; it is the source of truth. Where this packet and spec.md disagree on counts or text, spec.md wins.
 
@@ -8,7 +8,7 @@ v0.3 update: re-read spec.md in full; it is the source of truth. Where this pack
 
 ## Header chrome
 
-Title "ACC-01 Account schedule and Due today" · v0.3 · 2026-11-18 · Owner: Tray · Status: approved (accepted by owner; see review note) · Depth reason: "HTML because the spec carries an API contract and a data flow across the ticketing boundary (owner's choice; triage suggested markdown only)."
+Title "ACC-01 Account schedule and Due today" · v0.4 · 2026-11-18 · Owner: Tray · Status: approved (accepted by owner; see review note) · Depth reason: "HTML because the spec carries an API contract and a data flow across the ticketing boundary (owner's choice; triage suggested markdown only)."
 
 Phase rail: Spec (done) → Review (done) → Build (current) → Tests → Ship.
 
@@ -81,10 +81,10 @@ Badges: R12 and R16 on fetchTicketCounts, R8 R9 R10 R13 on computeSchedule, R18 
 Account record fields, from the spec's record example and R4/R5:
 id · string · server-generated · unique id (R4)
 accountName · string · required · company name
-ownerName · string · required · main customer contact
+owner · Contact { name, email } · required · main customer contact; email links tickets (D15)
 planSize · string · required · free text for now (Q7)
 customerType · "new_business" or "existing_customer" · required · which onboarding path the account follows (only new_business is modeled; Q5)
-authorizedContacts · array of non-empty strings · optional, default [] · other people allowed to work with the OBM
+authorizedContacts · array of Contact { name, email } · optional, default [] · other people allowed to work with the OBM; email required
 startDate · YYYY-MM-DD · required · Day 0
 welcomeSentOn, kickoffBookedOn, kickoffCallOn, planSharedOn, toolsSharedOn, handoffSentOn · YYYY-MM-DD or null · set to null on create
 remindersSentOn · array of YYYY-MM-DD · set to [] on create
@@ -108,7 +108,7 @@ Render all 22 when/if/then blocks verbatim from the spec inside `<details>` with
 
 ## Decisions
 
-2-column cards (chosen / rejected-with-reason) for D1, D2, D6, D11, which shape the build most; D3-D5, D7-D10, and D12-D14 in a `<details>` list, verbatim titles plus one-sentence decision each. Show amended markers as given.
+2-column cards (chosen / rejected-with-reason) for D1, D2, D6, D11, which shape the build most; D3-D5, D7-D10, and D12-D15 in a `<details>` list, verbatim titles plus one-sentence decision each. Show amended markers as given.
 
 ## Out of scope
 
@@ -116,7 +116,7 @@ Simple list, verbatim, 11 items.
 
 ## Open questions
 
-Checklist, 14 items verbatim. Q1, Q3, Q11, and Q12 checked with their resolutions; the rest unchecked with proposed default and "blocks: no". Mark [ASSUMPTION] items with a small chip.
+Checklist, 15 items verbatim. Q1, Q3, Q11, and Q12 checked with their resolutions; the rest unchecked with proposed default and "blocks: no". Mark [ASSUMPTION] items with a small chip.
 
 ## Risks
 

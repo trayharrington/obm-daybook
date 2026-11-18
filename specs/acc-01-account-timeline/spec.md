@@ -1,7 +1,8 @@
-# ACC-01 Account schedule and Due today — spec v0.3 (2026-11-18)
+# ACC-01 Account schedule and Due today — spec v0.4 (2026-11-18)
 
-> Depth: `md_html` · Triage: `fallback` (suggested `md`; owner chose `md_html` on 2026-11-18 because the spec carries an API contract and a data flow across the ticketing boundary) · Status: `approved` (owner accepted v0.3 on 2026-11-18 with F21-F22 fixed after the cycle's final review round, not re-scored)
+> Depth: `md_html` · Triage: `fallback` (suggested `md`; owner chose `md_html` on 2026-11-18 because the spec carries an API contract and a data flow across the ticketing boundary) · Status: `approved` (owner accepted v0.3 on 2026-11-18 with F21-F22 fixed after the cycle's final review round, not re-scored; v0.4 contact change made by the owner without a review round, listed under Review)
 > Owner: Tray · Seams: `3`
+> v0.4 (2026-11-18): contacts carry name and email (owner replaces ownerName; R4, R5, R12, R15, D15, Q15).
 > v0.3 (2026-11-18): owner amendments after SHIP: kickoff no-show and waive (R19-R21), reminders continue past 2 with escalation (R7, R9), 7-day contact check-in (R22).
 > v0.2 (2026-11-18): revised after review round 1 (findings F1-F12). Title narrowed from "Account timeline" because the per-account timeline page moved to slice 2 (F8).
 
@@ -69,9 +70,11 @@ R3 [must] — Unknown account
   Then the response is 404 with JSON { "error": "Account <id> not found" }
 
 R4 [must] — Create an account
-  When a client sends POST /api/accounts with accountName, ownerName, planSize,
-       customerType, startDate, and optional authorizedContacts
+  When a client sends POST /api/accounts with accountName, owner (a contact),
+       planSize, customerType, startDate, and optional authorizedContacts (a list
+       of contacts), where a contact is { name, email }
   Then the response is 201 with the stored account: a server-generated id,
+       every email trimmed and lowercased,
        authorizedContacts defaulting to [], remindersSentOn and checkInsSentOn
        set to [], and every other event field (welcomeSentOn, kickoffBookedOn,
        kickoffCallOn, kickoffOutcome, kickoffWaivedOn, rescheduleOutreachSentOn,
@@ -82,7 +85,9 @@ R5 [must] — Reject an invalid account
   When a client sends POST /api/accounts with a JSON body
   If   a required field is missing or an empty string, startDate is not a real
        YYYY-MM-DD date, customerType is not "new_business" or "existing_customer",
-       or authorizedContacts is present but is not an array of non-empty strings
+       owner or any authorizedContacts entry lacks a non-empty name or a valid
+       email (valid = one "@" with text before it and a domain containing a "."
+       after it, no spaces), or authorizedContacts is present but is not an array
   Then the response is 400 with JSON { "error": "<message naming the field>" }
        and nothing is stored
 
@@ -139,7 +144,8 @@ R11 [should] — Handoff waits on open issues
 
 R12 [must] — Ticket counts from a ticket source
   When the Due today page loads
-  Then it asks a TicketSource for each account's open tickets and passes the
+  Then it asks a TicketSource for each account's open tickets (tickets whose
+       requester email matches the owner or an authorized contact) and passes the
        count into computeSchedule (null when unavailable, see R16); in this slice the source is a fake returning
        seeded sample tickets keyed to the seed account ids, so accounts created
        by POST have 0 tickets
@@ -157,7 +163,8 @@ R14 [should] — Status is readable without color
 
 R15 [must] — Sample data only
   When the app ships seed accounts or seed tickets
-  Then every company, person, and ticket in them is invented; no real customer data
+  Then every company, person, and ticket in them is invented, and every email
+       uses the reserved example.com domain; no real customer data
 
 R16 [must] — Ticket source unavailable
   When the Due today page asks the TicketSource for an account's tickets
@@ -224,10 +231,12 @@ Record (stored facts only; this is what GET /api/accounts/{id} returns)
 {
   "id": "a1b2c3",
   "accountName": "Prairie Oak Bakery",
-  "ownerName": "Dana Whitfield",
+  "owner": { "name": "Dana Whitfield", "email": "dana@prairieoak.example.com" },
   "planSize": "Small",
   "customerType": "new_business",
-  "authorizedContacts": ["Sam Ortiz"],
+  "authorizedContacts": [
+    { "name": "Sam Ortiz", "email": "sam@prairieoak.example.com" }
+  ],
   "startDate": "2026-11-02",
   "welcomeSentOn": "2026-11-02",
   "remindersSentOn": [],
@@ -257,7 +266,8 @@ What this proves: nothing in the record goes stale. The due date, the overdue co
 
 ```
 Request    POST /api/accounts
-           { "accountName": "Juniper Dental", "ownerName": "Lee Park",
+           { "accountName": "Juniper Dental",
+             "owner": { "name": "Lee Park", "email": "lee@juniper.example.com" },
              "planSize": "Small", "customerType": "new_business",
              "startDate": "2026-11-31" }
 Response   400 { "error": "startDate must be a real date in YYYY-MM-DD format" }
@@ -286,6 +296,8 @@ No mockups exist yet.
 12. **Reminders have no cap; red means escalate.** Chose reminders every 3 days with no limit over stopping after 2, because the owner says outreach continues while the OBM escalates to the Account Manager and team lead. Consequence: an unresponsive account keeps producing reminder rows and stays red until the customer books or the call is waived. *(added 2026-11-18: owner amendment.)*
 13. **An unrecorded call outcome counts as held.** Chose "held unless marked otherwise" over waiting for the OBM to record an outcome, because a forgotten entry should not silently stall T4 and everything after it. Consequence: a no-show must be recorded, or the schedule moves on as if the call happened. *(added 2026-11-18: owner amendment.)*
 14. **Check-ins only fill silences.** Chose a check-in only when no other touchpoint is due within the 7 days over a fixed weekly check-in, because a planned touchpoint already counts as contact. Consequence: on a healthy account check-ins never appear; they show up only when a delay leaves a gap. *(added 2026-11-18: owner amendment.)*
+
+15. **Email links contacts to tickets.** Chose storing each contact as { name, email } with the email required, over names only or emails in a separate list. Because the ticketing system identifies requesters by email, so the email is the only reliable way to attach a ticket to an account, and keeping name and email in one object means they cannot drift apart. Consequence: `ownerName` became `owner`; the Zendesk TicketSource will search by these emails, while the slice-1 fake stays keyed by account id. *(added 2026-11-18: owner amendment.)*
 
 ## Out of scope
 
@@ -317,6 +329,8 @@ No mockups exist yet.
 - [x] Q12 Are 2 reminders the real cap? — resolved: `no cap; outreach continues every 3 days, and after 2 unanswered reminders the OBM escalates to the Account Manager and team lead` (owner, 2026-11-18)
 - [ ] Q13 Is "never a week without contact" a real rule, and is 7 days the number? — proposed default: `yes, 7 days` [ASSUMPTION, confirm with the Lead OBM] · blocks: `no`
 - [ ] Q14 After the second reminder, is every 3 days still the right cadence? — proposed default: `3 days` [ASSUMPTION] · blocks: `no`
+
+- [ ] Q15 Can the same email belong to two accounts (an existing customer bringing over another account)? If so, whose ticket is it? — proposed default: `count the ticket for every account that lists the email` [ASSUMPTION] · blocks: `no`
 
 ## Review
 
@@ -365,6 +379,8 @@ Findings: F17 major reminder counting after a no-show → fixed (R7 anchor and c
 Cycle 2, round 2 (changed parts only) · same reviewer · 2026-11-18: Context completeness 4 · Requirement testability 4 · Readiness 3 · Implementation confidence 4 · Risk coverage 4 · Decision traceability 5 · **Total 24/30 · Verdict: REVISE**
 
 Findings: F21 major no-show restarts old reminder loop early → fixed (R7: loop paused until reschedule outreach is sent) · F22 minor waived account can stay red → fixed (R7 "not waived", R9, D12). Fixed after the cycle's final round; not formally re-scored (see Status).
+
+v0.4 change (owner, 2026-11-18, no review round): contacts become { name, email } with email required for the owner and every authorized contact; touches R4, R5, R12, R15, the data examples, D15, Q15.
 
 ## Risks
 
