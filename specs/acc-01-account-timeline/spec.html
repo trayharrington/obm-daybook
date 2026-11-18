@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ACC-01 Account schedule and Due today — spec</title>
+<style>
+  :root {
+    --ink:#14171a; --dim:#5b646d; --faint:#8b949c; --line:#e2e5e8; --paper:#fcfcfb; --card:#fff;
+    --accent:#0f7b6c; --accent-soft:#e8f4f1; --warn:#8a5b00; --warn-soft:#fdf3e2; --stop:#a33; --stop-soft:#fdeceb;
+    --codebg:#f1f3f4; --track:#eef1f2; --svgtext:#14171a; --svgdim:#5b646d; --svgnode:#ffffff; --svgstroke:#c8ced3;
+    --svgline:#5b646d; --svgbadge:#e8f4f1;
+    --r:10px; --maxw:60rem;
+    --fd:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --fm:ui-monospace,"SF Mono",Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink:#e6edf3; --dim:#9aa4ad; --faint:#7d8790; --line:#2c3439; --paper:#0f1416; --card:#161c1f;
+      --accent:#5fc7b3; --accent-soft:#15302b; --warn:#e6b65c; --warn-soft:#2e2612; --stop:#f08a8a; --stop-soft:#3a1f1f;
+      --codebg:#222b30; --track:#242c31; --svgtext:#e6edf3; --svgdim:#9aa4ad; --svgnode:#161c1f; --svgstroke:#4a555c;
+      --svgline:#9aa4ad; --svgbadge:#15302b;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink:#e6edf3; --dim:#9aa4ad; --faint:#7d8790; --line:#2c3439; --paper:#0f1416; --card:#161c1f;
+    --accent:#5fc7b3; --accent-soft:#15302b; --warn:#e6b65c; --warn-soft:#2e2612; --stop:#f08a8a; --stop-soft:#3a1f1f;
+    --codebg:#222b30; --track:#242c31; --svgtext:#e6edf3; --svgdim:#9aa4ad; --svgnode:#161c1f; --svgstroke:#4a555c;
+    --svgline:#9aa4ad; --svgbadge:#15302b;
+  }
+  *{box-sizing:border-box;margin:0}
+  body{font:16px/1.65 var(--fd);color:var(--ink);background:var(--paper);padding:32px 16px 72px}
+  .wrap{max-width:var(--maxw);margin:0 auto}
+  /* ---- header chrome ---- */
+  .hdr{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline;font-size:.78rem;color:var(--dim);border-bottom:1px solid var(--line);padding-bottom:14px}
+  .hdr b{color:var(--ink)}
+  .chip{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:.08em .7em;font-size:.72rem;background:var(--card);color:var(--ink)}
+  .chip.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent);font-weight:600}
+  .phase{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0}
+  .depth{font-size:.8rem;color:var(--dim);margin-top:10px}
+  h1{font-size:1.9rem;letter-spacing:-.02em;line-height:1.2;margin:22px 0 6px}
+  .sub{color:var(--dim);margin-bottom:26px}
+  /* ---- triad: the first viewport ---- */
+  .triad{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:0 0 26px}
+  .triad div{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+  .triad h2{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--accent);margin-bottom:6px}
+  .triad p{font-size:.94rem;line-height:1.5}
+  .readme{background:var(--accent-soft);border-left:3px solid var(--accent);border-radius:6px;padding:14px 18px;margin-bottom:34px}
+  .readme h2{font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--accent);margin-bottom:8px}
+  .readme ul{padding-left:1.1rem} .readme li{margin:.25rem 0}
+  /* ---- sections ---- */
+  section{margin:40px 0}
+  h2.sec{font-size:1.15rem;letter-spacing:-.01em;margin-bottom:4px}
+  .take{font-size:1.02rem;font-weight:500;color:var(--ink);margin-bottom:14px}
+  .tblwrap{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:.86rem;background:var(--card)}
+  th,td{text-align:left;padding:.5rem .65rem;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--faint)}
+  code{font-family:var(--fm);font-size:.85em;background:var(--codebg);padding:.1em .35em;border-radius:4px}
+  .cov{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0}
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.cards{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;font-size:.92rem}
+  .card.chosen{border-left:3px solid var(--accent)} .card.rejected{border-left:3px solid var(--line);color:var(--dim)}
+  .card b{display:block;margin-bottom:4px;color:var(--ink)}
+  details{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;margin:10px 0}
+  details > p, details > ul, details > ol, details > .tblwrap{margin-top:10px}
+  summary{cursor:pointer;font-weight:600;font-size:.9rem}
+  details ul{padding-left:1.1rem;font-size:.9rem} details li{margin:.3rem 0}
+  .callout{background:var(--warn-soft);border-left:3px solid var(--warn);border-radius:6px;padding:12px 16px;margin:12px 0;font-size:.9rem}
+  .callout.stop{background:var(--stop-soft);border-left-color:var(--stop)}
+  .sev{display:inline-block;border-radius:99px;padding:.05em .6em;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-right:6px;border:1px solid var(--line)}
+  .sev.high{background:var(--stop-soft);color:var(--stop);border-color:var(--stop)}
+  .owner{font-size:.78rem;color:var(--dim)}
+  /* figure + diagrams */
+  figure{margin:16px 0;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+  figcaption{font-size:.82rem;color:var(--dim);margin-top:10px}
+  .diag{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .diag svg{display:block;width:100%;height:auto}
+  .diag.a svg{min-width:820px}
+  .diag.b svg{min-width:900px}
+  .dg text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+  .dg .n{fill:var(--svgnode);stroke:var(--svgstroke);stroke-width:1.2}
+  .dg .t{fill:var(--svgtext);font-size:13px;font-weight:600;text-anchor:middle}
+  .dg .t12{font-size:12px}
+  .dg .s{fill:var(--svgdim);font-size:11px;text-anchor:middle}
+  .dg .e{fill:none;stroke:var(--svgline);stroke-width:1.6}
+  .dg .e.d{stroke-dasharray:5 4}
+  .dg .ah{fill:var(--svgline)}
+  .dg .bd{fill:none;stroke:var(--svgdim);stroke-width:1.2;stroke-dasharray:5 4}
+  .dg .b{fill:var(--svgbadge);stroke:var(--accent);stroke-width:1}
+  .dg .bt{fill:var(--accent);font-size:10px;font-weight:700;text-anchor:middle}
+  /* checklist (open questions) */
+  .check{list-style:none;padding:0;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+  .check li{display:flex;gap:10px;align-items:flex-start;padding:11px 14px;border-bottom:1px solid var(--line);font-size:.9rem}
+  .check li:last-child{border-bottom:0}
+  .check li::before{content:"";flex:0 0 15px;height:15px;margin-top:3px;border:1.5px solid var(--faint);border-radius:4px}
+  .check li.done::before{background:var(--accent);border-color:var(--accent);content:"✓";color:#fff;font-size:11px;line-height:13px;text-align:center}
+  .check .meta{color:var(--dim);font-size:.8rem;display:block;margin-top:2px}
+  .check .blocks{color:var(--stop);font-weight:600}
+  /* worked data example */
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:640px){.pair{grid-template-columns:1fr}}
+  .data{background:#0f1416;color:#e6edf3;border-radius:var(--r);padding:14px 16px;font:13px/1.6 var(--fm);overflow-x:auto;margin:10px 0}
+  .data .lab{display:block;color:#7fd6c4;font-size:.68rem;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px;font-family:var(--fd)}
+  .data pre{margin:0;white-space:pre-wrap}
+  .reqs{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-top:10px}
+  .reqs pre{margin:0;white-space:pre-wrap;font:12.5px/1.6 var(--fm);color:var(--ink)}
+  .mini{font-size:.8rem;color:var(--dim)}
+  /* review scorecard */
+  .score{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:6px 0;margin:10px 0}
+  .score .row{display:grid;grid-template-columns:14rem 3.5rem 1fr;gap:10px;align-items:center;padding:8px 16px;font-size:.88rem;border-bottom:1px solid var(--line)}
+  .score .row:last-child{border-bottom:0}
+  .score small{display:block;color:var(--dim);font-size:.76rem;line-height:1.35}
+  .score .bar{height:7px;border-radius:99px;background:var(--track);overflow:hidden}
+  .score .bar i{display:block;height:100%;background:var(--accent)}
+  .score .total{font-weight:700}
+  @media(max-width:640px){
+    .score .row{grid-template-columns:1fr auto}
+    .score .row .bar{grid-column:1/-1;order:3}
+  }
+  .verdict{display:inline-block;border-radius:99px;padding:.15em .8em;font-size:.72rem;font-weight:700;letter-spacing:.06em}
+  .verdict.ship{background:var(--accent-soft);color:var(--accent)}
+  .verdict.revise{background:var(--warn-soft);color:var(--warn)}
+  .verdict.block{background:var(--stop-soft);color:var(--stop)}
+  footer{margin-top:56px;padding-top:16px;border-top:1px solid var(--line);font-size:.78rem;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hdr">
+    <span><b>ACC-01 Account schedule and Due today</b></span>
+    <span>v0.3</span><span>2026-11-18</span><span>Owner: Tray</span>
+    <span class="chip on">approved</span><span>(accepted by owner; see review note)</span>
+    <span class="chip">depth: md_html</span>
+  </div>
+  <div class="phase">
+    <span class="chip">Spec (done)</span>
+    <span class="chip">Review (done)</span>
+    <span class="chip on">Build (current)</span>
+    <span class="chip">Tests</span>
+    <span class="chip">Ship</span>
+  </div>
+  <p class="depth">Depth reason: HTML because the spec carries an API contract and a data flow across the ticketing boundary (owner's choice; triage suggested markdown only).</p>
+
+  <h1>ACC-01 Account schedule and Due today</h1>
+  <p class="sub">Spec v0.3 for this slice of the onboarding tracker, approved 2026-11-18.</p>
+
+  <div class="triad">
+    <div><h2>What this solves</h2><p>An Onboarding Manager tracks every new customer's first weeks by hand, and one missed deadline quietly pushes every later step back.</p></div>
+    <div><h2>How it solves it</h2><p>The app stores only the dates things happened and calculates every due date, overdue count, and health color from them, then lists what is owed today, most overdue first.</p></div>
+    <div><h2>How we prove it</h2><p>Each of the 22 requirements is tied to a named test or screenshot at three seams: the schedule calculations, the ticket lookup, and the accounts API.</p></div>
+  </div>
+
+  <div class="readme">
+    <h2>30-second read</h2>
+    <ul>
+      <li>Deadlines are a chain: each touchpoint is due a set number of days after the one before it, so a late step delays everything after it.</li>
+      <li>Nothing stored can go stale: the record holds dates; due dates and health are calculated each time.</li>
+      <li>Health: green on track, yellow 1-3 days overdue, red 4+ days overdue or no response after 2 reminders (then the OBM escalates).</li>
+      <li>The kickoff call can be held, a no-show (reschedule and restart the chain), or waived; a week with no contact triggers a check-in.</li>
+      <li>Support tickets come from a ticket source (a fake now, Zendesk later); open tickets hold the final handoff.</li>
+      <li>Every timing is an assumption until the Lead OBM reviews it.</li>
+    </ul>
+  </div>
+
+  <section>
+    <h2 class="sec">Requirements at a glance</h2>
+    <p class="take">All 22 requirements have a check bound in the spec.</p>
+    <div class="tblwrap">
+    <table>
+      <tr><th>ID</th><th>Priority</th><th>Title</th></tr>
+      <tr><td>R1</td><td>must</td><td>List accounts</td></tr>
+      <tr><td>R2</td><td>must</td><td>Get one account</td></tr>
+      <tr><td>R3</td><td>must</td><td>Unknown account</td></tr>
+      <tr><td>R4</td><td>must</td><td>Create an account</td></tr>
+      <tr><td>R5</td><td>must</td><td>Reject an invalid account</td></tr>
+      <tr><td>R6</td><td>must</td><td>Due dates follow the chain</td></tr>
+      <tr><td>R7</td><td>must</td><td>Reminders while waiting on the customer</td></tr>
+      <tr><td>R8</td><td>must</td><td>Due today list</td></tr>
+      <tr><td>R9</td><td>must</td><td>Health status</td></tr>
+      <tr><td>R10</td><td>should</td><td>Most overdue first</td></tr>
+      <tr><td>R11</td><td>should</td><td>Handoff waits on open issues</td></tr>
+      <tr><td>R12</td><td>must</td><td>Ticket counts from a ticket source</td></tr>
+      <tr><td>R13</td><td>must</td><td>"Today" is the OBM's date</td></tr>
+      <tr><td>R14</td><td>should</td><td>Status is readable without color</td></tr>
+      <tr><td>R15</td><td>must</td><td>Sample data only</td></tr>
+      <tr><td>R16</td><td>must</td><td>Ticket source unavailable</td></tr>
+      <tr><td>R17</td><td>must</td><td>Body is not JSON</td></tr>
+      <tr><td>R18</td><td>must</td><td>Nothing due</td></tr>
+      <tr><td>R19</td><td>must</td><td>Kickoff call states</td></tr>
+      <tr><td>R20</td><td>must</td><td>Kickoff no-show</td></tr>
+      <tr><td>R21</td><td>must</td><td>Kickoff waived</td></tr>
+      <tr><td>R22</td><td>should</td><td>No week without contact</td></tr>
+    </table>
+    </div>
+    <p class="cov" aria-label="Requirement coverage">
+      <span class="chip on">R1</span><span class="chip on">R2</span><span class="chip on">R3</span><span class="chip on">R4</span><span class="chip on">R5</span><span class="chip on">R6</span><span class="chip on">R7</span><span class="chip on">R8</span><span class="chip on">R9</span><span class="chip on">R10</span><span class="chip on">R11</span><span class="chip on">R12</span><span class="chip on">R13</span><span class="chip on">R14</span><span class="chip on">R15</span><span class="chip on">R16</span><span class="chip on">R17</span><span class="chip on">R18</span><span class="chip on">R19</span><span class="chip on">R20</span><span class="chip on">R21</span><span class="chip on">R22</span>
+    </p>
+  </section>
+
+  <section>
+    <h2 class="sec">How we prove it</h2>
+    <p class="take">Three seams below the UI, so every check runs as a fast test without a browser.</p>
+    <div class="tblwrap">
+    <table>
+      <tr><th>Seam</th><th>What it pins</th><th>Kind</th></tr>
+      <tr><td>Schedule module <code>src/lib/schedule.ts</code>: <code>computeSchedule(account, today, openTicketCount: number | null)</code>, <code>buildDueToday(accounts, today, ticketCounts: Record&lt;string, number | null&gt;)</code>, <code>healthLabel(health)</code>, <code>todayInChicago(now)</code>; all pure, no I/O; <code>null</code> means the ticket count is unavailable</td><td>due dates, reminders, health and its text, row order, "today" in the OBM's time zone</td><td>test</td></tr>
+      <tr><td>Tickets module <code>src/lib/tickets.ts</code>: <code>fetchTicketCounts(source, ids, timeoutMs)</code> returns <code>Record&lt;string, number | null&gt;</code></td><td>asking the TicketSource, with a timeout; a throw or timeout becomes <code>null</code></td><td>test</td></tr>
+      <tr><td>Accounts route handlers, called directly with a <code>Request</code></td><td>status codes and response bodies</td><td>test</td></tr>
+    </table>
+    </div>
+    <details>
+      <summary>Which check proves each requirement (22 rows)</summary>
+      <div class="tblwrap">
+      <table>
+        <tr><th>R-ID</th><th>Check</th><th>Evidence target</th></tr>
+        <tr><td>R1</td><td>test</td><td><code>src/app/api/accounts/route.test.ts</code> · "R1 lists accounts"</td></tr>
+        <tr><td>R2</td><td>test</td><td><code>src/app/api/accounts/[id]/route.test.ts</code> · "R2 returns one account"</td></tr>
+        <tr><td>R3</td><td>test</td><td><code>src/app/api/accounts/[id]/route.test.ts</code> · "R3 unknown id is 404"</td></tr>
+        <tr><td>R4</td><td>test</td><td><code>src/app/api/accounts/route.test.ts</code> · "R4 create returns 201 with defaults"</td></tr>
+        <tr><td>R5</td><td>test</td><td><code>src/app/api/accounts/route.test.ts</code> · "R5 invalid body is 400"</td></tr>
+        <tr><td>R6</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R6 due dates follow the chain"</td></tr>
+        <tr><td>R7</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R7 reminders every 3 days from the latest anchor"</td></tr>
+        <tr><td>R8</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R8 one row per due touchpoint"</td></tr>
+        <tr><td>R9</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R9 health colors"</td></tr>
+        <tr><td>R10</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R10 rows sorted most overdue first"</td></tr>
+        <tr><td>R11</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R11 handoff holds on open tickets"</td></tr>
+        <tr><td>R12</td><td>test</td><td><code>src/lib/tickets.test.ts</code> · "R12 fake source counts open tickets"</td></tr>
+        <tr><td>R13</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R13 todayInChicago near midnight UTC"</td></tr>
+        <tr><td>R14</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R14 healthLabel text for every status" (plus the walkthrough screenshot)</td></tr>
+        <tr><td>R15</td><td>review</td><td><code>src/lib/seed.ts</code>, read by the owner before each commit that changes it</td></tr>
+        <tr><td>R16</td><td>test</td><td><code>src/lib/tickets.test.ts</code> · "R16 throw or timeout gives null"; <code>src/lib/schedule.test.ts</code> · "R16 null count shows tickets unavailable"</td></tr>
+        <tr><td>R17</td><td>test</td><td><code>src/app/api/accounts/route.test.ts</code> · "R17 non-JSON body is 400"</td></tr>
+        <tr><td>R18</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R18 empty list" (plus the walkthrough screenshot)</td></tr>
+        <tr><td>R19</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R19 kickoff call states, including waived"</td></tr>
+        <tr><td>R20</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R20 no-show starts reschedule outreach"</td></tr>
+        <tr><td>R21</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R21 waived call moves T4"</td></tr>
+        <tr><td>R22</td><td>test</td><td><code>src/lib/schedule.test.ts</code> · "R22 check-in after 7 days without contact"</td></tr>
+      </table>
+      </div>
+    </details>
+    <p class="mini" style="margin-top:14px">Setup before the first test (F10): install <code>vitest</code> as a dev dependency, add <code>vitest.config.ts</code> with the <code>@/</code> path alias matching <code>tsconfig.json</code>, and add <code>"test": "vitest run"</code> to <code>package.json</code> (<code>npx vitest</code> for watch mode while coding).</p>
+  </section>
+
+  <section>
+    <h2 class="sec">Review scorecard</h2>
+    <p class="take">The current score is cycle 2, round 2: 24/30, REVISE, accepted by the owner.</p>
+    <div class="score">
+      <div class="row"><span>Context completeness</span><span>4/5</span><span class="bar"><i style="width:80%"></i></span></div>
+      <div class="row"><span>Requirement testability</span><span>4/5</span><span class="bar"><i style="width:80%"></i></span></div>
+      <div class="row"><span>Readiness</span><span>3/5</span><span class="bar"><i style="width:60%"></i></span></div>
+      <div class="row"><span>Implementation confidence</span><span>4/5</span><span class="bar"><i style="width:80%"></i></span></div>
+      <div class="row"><span>Risk coverage</span><span>4/5</span><span class="bar"><i style="width:80%"></i></span></div>
+      <div class="row"><span>Decision traceability</span><span>5/5</span><span class="bar"><i style="width:100%"></i></span></div>
+      <div class="row"><span class="total">Total</span><span class="total">24/30</span><span><span class="verdict revise">REVISE</span> <span class="chip">Accepted by owner</span></span></div>
+    </div>
+    <p class="mini">Cycle 2, round 2 (changed parts only) · same reviewer · 2026-11-18</p>
+    <p class="mini">F21-F22 fixed after the cycle's final round; not formally re-scored. Owner accepted v0.3 on 2026-11-18.</p>
+    <details>
+      <summary>Cycle 2, round 2 findings: F21-F22</summary>
+      <ul>
+        <li>F21 major no-show restarts old reminder loop early → fixed (R7: loop paused until reschedule outreach is sent)</li>
+        <li>F22 minor waived account can stay red → fixed (R7 "not waived", R9, D12)</li>
+      </ul>
+    </details>
+    <details>
+      <summary>Cycle 2, round 1 · same reviewer · 2026-11-18 · 23/30 · REVISE</summary>
+      <div class="tblwrap">
+      <table>
+        <tr><th>Dimension</th><th>Score</th><th>Evidence</th></tr>
+        <tr><td>Context completeness</td><td>4/5</td><td>Escalation and history scoped out; open questions stale</td></tr>
+        <tr><td>Requirement testability</td><td>4/5</td><td>New R-IDs bound; R7 and R14 checks mismatched</td></tr>
+        <tr><td>Readiness</td><td>3/5</td><td>Reminder counting after a no-show undefined</td></tr>
+        <tr><td>Implementation confidence</td><td>4/5</td><td>Kickoff state order explicit; check-in example holds</td></tr>
+        <tr><td>Risk coverage</td><td>4/5</td><td>No invariant tying waived to its date</td></tr>
+        <tr><td>Decision traceability</td><td>4/5</td><td>New rules had no Decision entries</td></tr>
+        <tr><td><b>Total</b></td><td><b>23/30</b></td><td>Verdict: <span class="verdict revise">REVISE</span></td></tr>
+      </table>
+      </div>
+      <p>Findings: F17 major reminder counting after a no-show → fixed (R7 anchor and current booking, R9) · F18 minor R7 and R14 checks mismatched → fixed (test names, R14 precedence) · F19 minor waived invariant → fixed (R19) · F20 minor stale Q6 and scope → fixed (Q6, Out of scope, R8 clear condition) · decision gap → fixed (D12-D14)</p>
+    </details>
+    <details>
+      <summary>Cycle 1, round 2 · same reviewer · 2026-11-18 · 25/30 · SHIP</summary>
+      <div class="tblwrap">
+      <table>
+        <tr><th>Dimension</th><th>Score</th><th>Evidence</th></tr>
+        <tr><td>Context completeness</td><td>4/5</td><td>Title narrowed, route named; no target metric</td></tr>
+        <tr><td>Requirement testability</td><td>4/5</td><td>Pure seams; R16 timeout needed its own seam</td></tr>
+        <tr><td>Readiness</td><td>4/5</td><td>Signature, T3, reminders, rows settled</td></tr>
+        <tr><td>Implementation confidence</td><td>4/5</td><td>Fetch-with-timeout had no home</td></tr>
+        <tr><td>Risk coverage</td><td>4/5</td><td>Failure, non-JSON, empty paths added</td></tr>
+        <tr><td>Decision traceability</td><td>5/5</td><td>Dated amendments cite findings</td></tr>
+        <tr><td><b>Total</b></td><td><b>25/30</b></td><td>Verdict: <span class="verdict ship">SHIP</span></td></tr>
+      </table>
+      </div>
+      <p>Findings: F13 major R16 unprovable at its seam → fixed (tickets module seam, R16 row) · F14 minor null type unstated → fixed (signatures) · F15 minor booked call without a date → fixed (R19 invariant) · F16 minor row contents disagree → fixed (R8, R10, R14 bound to <code>healthLabel</code>) · cosmetic casing and <code>vitest run</code> → fixed</p>
+    </details>
+    <details>
+      <summary>Cycle 1, round 1 · fresh-context reviewer · 2026-11-18 · 18/30 · REVISE</summary>
+      <div class="tblwrap">
+      <table>
+        <tr><th>Dimension</th><th>Score</th><th>Evidence</th></tr>
+        <tr><td>Context completeness</td><td>4/5</td><td>Clear boundary and honest risks; no UI route named</td></tr>
+        <tr><td>Requirement testability</td><td>3/5</td><td>Sort order and Central time untestable at bound seams</td></tr>
+        <tr><td>Readiness</td><td>2/5</td><td>Ticket signature, T3 meaning, row model unclear</td></tr>
+        <tr><td>Implementation confidence</td><td>3/5</td><td>Good seams; schedule signature incomplete</td></tr>
+        <tr><td>Risk coverage</td><td>2/5</td><td>No ticket failure, non-JSON, or empty-list paths</td></tr>
+        <tr><td>Decision traceability</td><td>4/5</td><td>D8 had no reason</td></tr>
+        <tr><td><b>Total</b></td><td><b>18/30</b></td><td>Verdict: <span class="verdict revise">REVISE</span></td></tr>
+      </table>
+      </div>
+      <p>Findings: F1 blocker schedule cannot see tickets → fixed (signature, R12, D6) · F2 major R13 untestable → fixed (<code>todayInChicago</code>, R13) · F3 major T3 undefined → fixed (R19, Q11) · F4 major row model ambiguous → fixed (R8, R10, D11) · F5 major reminder loop open → fixed (R7, R9, R14, Q12) · F6 major unhappy paths missing → fixed (R16, R17, R18) · F7 major D2 contradicts API → fixed (D2, R1, R2) · F8 major title feature has no requirement → fixed (title narrowed, page route <code>/</code> in R8, timeline page out of scope) · F9 minor POST defaults → fixed (R4, R5, R12) · F10 minor Vitest missing → fixed (setup step) · F11 minor hot reload, seed path → fixed (D5, R15) · F12 minor D8 reason → fixed (D8)</p>
+    </details>
+  </section>
+
+  <section>
+    <h2 class="sec">Touchpoint chain</h2>
+    <p class="take">Each deadline is counted from the step before it, so one late step moves every later one.</p>
+    <figure>
+      <div class="diag a">
+      <svg viewBox="0 0 960 330" role="img" aria-label="Touchpoint chain from T1 Welcome to T6 Support handoff, left to right. A no-show branch from T3 leads to reschedule outreach, which loops back to T2. A waived branch from T3 leads to T4. A separate check-in note sits at the lower right. The T1 to T2 arrow is dashed.">
+        <defs><marker id="arrA" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="ah" d="M0 0 L8 4 L0 8z"/></marker></defs>
+        <g class="dg">
+          <!-- chain nodes -->
+          <rect class="n" x="43" y="50" width="124" height="56" rx="8"/>
+          <rect class="n" x="193" y="50" width="124" height="56" rx="8"/>
+          <rect class="n" x="343" y="50" width="124" height="56" rx="8"/>
+          <rect class="n" x="493" y="50" width="124" height="56" rx="8"/>
+          <rect class="n" x="643" y="50" width="124" height="56" rx="8"/>
+          <rect class="n" x="793" y="50" width="124" height="56" rx="8"/>
+          <!-- branch and note nodes -->
+          <rect class="n" x="260" y="190" width="140" height="44" rx="8"/>
+          <rect class="n" x="520" y="190" width="110" height="44" rx="8"/>
+          <rect class="n" x="660" y="186" width="260" height="44" rx="8"/>
+          <!-- chain titles -->
+          <text class="t" x="105" y="83">T1 Welcome</text>
+          <text class="t" x="255" y="83">T2 Reminder</text>
+          <text class="t" x="405" y="83">T3 Kickoff call</text>
+          <text class="t" x="555" y="73">T4 Plan and</text><text class="t" x="555" y="89">next steps</text>
+          <text class="t" x="705" y="73">T5 Tools and</text><text class="t" x="705" y="89">walkthrough</text>
+          <text class="t" x="855" y="73">T6 Support</text><text class="t" x="855" y="89">handoff</text>
+          <!-- branch and note titles -->
+          <text class="t t12" x="330" y="208">Reschedule outreach</text><text class="s" x="330" y="223">(next day)</text>
+          <text class="t" x="575" y="216">Waived</text>
+          <text class="s" x="790" y="205">Check-in: due after 7 days with no contact,</text><text class="s" x="790" y="220">only if nothing else is due</text>
+          <!-- labels under chain nodes -->
+          <text class="s" x="105" y="124">Day 0</text>
+                    <text class="s" x="405" y="124">customer books it;</text><text class="s" x="405" y="138">never overdue</text>
+          <text class="s" x="555" y="124">call date + 1 day</text>
+          <text class="s" x="705" y="124">T4 done + 7 days</text>
+          <text class="s" x="855" y="124">T5 done + 7 days;</text><text class="s" x="855" y="138">on hold while</text><text class="s" x="855" y="152">tickets are open</text>
+          <!-- chain edges -->
+          <path class="e d" d="M167 78 L193 78" marker-end="url(#arrA)"/>
+          <path class="e" d="M317 78 L343 78" marker-end="url(#arrA)"/>
+          <path class="e" d="M467 78 L493 78" marker-end="url(#arrA)"/>
+          <path class="e" d="M617 78 L643 78" marker-end="url(#arrA)"/>
+          <path class="e" d="M767 78 L793 78" marker-end="url(#arrA)"/>
+          <path class="e" d="M105 50 C105 6 405 6 405 50" marker-end="url(#arrA)"/>
+          <!-- branch edges -->
+          <path class="e" d="M385 146 V190" marker-end="url(#arrA)"/>
+          <text class="s" style="text-anchor:end" x="380" y="170">No-show</text>
+          <path class="e d" d="M260 212 H240 V108" marker-end="url(#arrA)"/>
+          <text class="s" style="text-anchor:end" x="232" y="160">loop restarts</text>
+          <text class="s" style="paint-order:stroke;stroke:var(--card);stroke-width:4px" x="255" y="124">every 3 days until booked</text>
+          <path class="e" d="M425 146 V212 H520" marker-end="url(#arrA)"/>
+          <text class="s" style="text-anchor:start" x="430" y="170">Waived</text>
+          <path class="e" d="M612 190 V106" marker-end="url(#arrA)"/>
+          <text class="s" style="text-anchor:start" x="620" y="150">T4 = waive date + 1</text>
+          <!-- badges -->
+          <rect class="b" x="237" y="9" width="36" height="16" rx="8"/><text class="bt" x="255" y="20.5">R6</text>
+          <rect class="b" x="287" y="42" width="36" height="16" rx="8"/><text class="bt" x="305" y="53.5">R7</text>
+          <rect class="b" x="437" y="42" width="36" height="16" rx="8"/><text class="bt" x="455" y="53.5">R19</text>
+          <rect class="b" x="887" y="42" width="36" height="16" rx="8"/><text class="bt" x="905" y="53.5">R11</text>
+          <rect class="b" x="358" y="226" width="36" height="16" rx="8"/><text class="bt" x="376" y="237.5">R20</text>
+          <rect class="b" x="588" y="226" width="36" height="16" rx="8"/><text class="bt" x="606" y="237.5">R21</text>
+          <rect class="b" x="884" y="178" width="36" height="16" rx="8"/><text class="bt" x="902" y="189.5">R22</text>
+          <!-- legend and boundary -->
+          <text class="s" x="480" y="302">Dashed T1 → T2 arrow: only if no call is booked</text>
+          <text class="s" x="480" y="322">Boundary: Only the new-business path is shown; other paths are out of scope.</text>
+        </g>
+      </svg>
+      </div>
+      <figcaption>What this proves: One late step moves every later due date, because each deadline is counted from the step before it.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2 class="sec">Where the Due today list comes from</h2>
+    <p class="take">Ticket data crosses into the app at one boundary, so the schedule does not depend on the ticket source.</p>
+    <figure>
+      <div class="diag b">
+      <svg viewBox="0 0 1080 240" role="img" aria-label="Flow from account records and the TicketSource to the Due today page. A dashed rounded box around TicketSource is labeled outside the app.">
+        <defs><marker id="arrB" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path class="ah" d="M0 0 L8 4 L0 8z"/></marker></defs>
+        <g class="dg">
+          <!-- nodes -->
+          <rect class="n" x="30" y="40" width="200" height="56" rx="8"/>
+          <rect class="n" x="30" y="150" width="200" height="56" rx="8"/>
+          <rect class="n" x="340" y="150" width="240" height="56" rx="8"/>
+          <rect class="n" x="640" y="40" width="220" height="56" rx="8"/>
+          <rect class="n" x="900" y="40" width="160" height="56" rx="8"/>
+          <!-- node text -->
+          <text class="t" x="130" y="64">Account records</text><text class="s" x="130" y="82">(in-memory store)</text>
+          <text class="t" x="130" y="174">TicketSource</text><text class="s" x="130" y="192">(fake now · Zendesk later)</text>
+          <text class="t" x="460" y="174">fetchTicketCounts</text><text class="s" x="460" y="192">(3 s timeout; failure → unavailable)</text>
+          <text class="t t12" x="750" y="64">computeSchedule + buildDueToday</text><text class="s" x="750" y="82">(pure)</text>
+          <text class="t" x="980" y="73">Due today page (/)</text>
+          <!-- edges -->
+          <path class="e" d="M230 68 H640" marker-end="url(#arrB)"/>
+          <path class="e" d="M230 178 H340" marker-end="url(#arrB)"/>
+          <path class="e" d="M580 178 H750 V96" marker-end="url(#arrB)"/>
+          <path class="e" d="M860 68 H900" marker-end="url(#arrB)"/>
+          <!-- edge labels, each directly above its own arrow -->
+          <text class="s" x="435" y="60">stored dates</text>
+          <text class="s" x="285" y="160">open tickets</text>
+          <text class="s" x="285" y="172">per account</text>
+          <text class="s" x="665" y="170">count or unavailable</text>
+          <text class="s" x="880" y="28">rows, most overdue first</text>
+          <!-- boundary: dashed rounded box around TicketSource only -->
+          <rect class="bd" x="20" y="138" width="220" height="80" rx="12"/>
+          <text class="s" x="130" y="130">outside the app</text>
+          <!-- badges -->
+          <rect class="b" x="500" y="142" width="36" height="16" rx="8"/><text class="bt" x="518" y="153.5">R12</text>
+          <rect class="b" x="540" y="142" width="36" height="16" rx="8"/><text class="bt" x="558" y="153.5">R16</text>
+          <rect class="b" x="698" y="32" width="36" height="16" rx="8"/><text class="bt" x="716" y="43.5">R8</text>
+          <rect class="b" x="738" y="32" width="36" height="16" rx="8"/><text class="bt" x="756" y="43.5">R9</text>
+          <rect class="b" x="778" y="32" width="36" height="16" rx="8"/><text class="bt" x="796" y="43.5">R10</text>
+          <rect class="b" x="818" y="32" width="36" height="16" rx="8"/><text class="bt" x="836" y="43.5">R13</text>
+          <rect class="b" x="1018" y="32" width="36" height="16" rx="8"/><text class="bt" x="1036" y="43.5">R18</text>
+        </g>
+      </svg>
+      </div>
+      <figcaption>What this proves: Ticket data crosses into the app at one boundary, so the fake source can be swapped for Zendesk without changing the schedule.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2 class="sec">Data examples</h2>
+    <p class="take">Stored facts are the only data kept; due dates, overdue counts, and health are calculated from them.</p>
+    <p class="mini">Illustrative values (invented). Today is 2026-11-18.</p>
+
+    <p class="mini" style="margin-top:14px"><b>Record → Derived</b> · badges R6, R9, R19</p>
+    <div class="pair">
+      <div class="data"><span class="lab">Record</span><pre>{
+  "id": "a1b2c3",
+  "accountName": "Prairie Oak Bakery",
+  "ownerName": "Dana Whitfield",
+  "planSize": "Small",
+  "customerType": "new_business",
+  "authorizedContacts": ["Sam Ortiz"],
+  "startDate": "2026-11-02",
+  "welcomeSentOn": "2026-11-02",
+  "remindersSentOn": [],
+  "kickoffBookedOn": "2026-11-04",
+  "kickoffCallOn": "2026-11-10",
+  "kickoffOutcome": "held",
+  "kickoffWaivedOn": null,
+  "rescheduleOutreachSentOn": null,
+  "checkInsSentOn": [],
+  "planSharedOn": null,
+  "toolsSharedOn": null,
+  "handoffSentOn": null
+}</pre></div>
+      <div class="data"><span class="lab">Derived (computeSchedule(record, "2026-11-18", 0))</span><pre>  T1 Welcome                 done 2026-11-02
+  T2 Reminder                not needed (call booked 2026-11-04, within 3 days)
+  T3 Kickoff call            held 2026-11-10
+  T4 Plan and next steps     due  2026-11-11   7 days overdue
+  T5 Tools and walkthrough   not yet scheduled (waits on T4)
+  T6 Support handoff         not yet scheduled (waits on T5)
+  Check-in                   not needed (T4 was already due before 2026-11-17)
+  Health: Red · 7 days overdue</pre></div>
+    </div>
+    <figcaption>What this proves: Nothing in the record goes stale: due dates, overdue count, and health are all calculated from dates that never change.</figcaption>
+
+    <p class="mini" style="margin-top:18px"><b>Request → Response</b> · badge R5</p>
+    <div class="data"><span class="lab">Request → Response</span><pre>Request    POST /api/accounts
+           { "accountName": "Juniper Dental", "ownerName": "Lee Park",
+             "planSize": "Small", "customerType": "new_business",
+             "startDate": "2026-11-31" }
+Response   400 { "error": "startDate must be a real date in YYYY-MM-DD format" }</pre></div>
+    <figcaption>What this proves: An impossible date is rejected, not rolled over to December 1.</figcaption>
+
+    <p class="mini" style="margin-top:14px">Mockups: No mockups exist yet.</p>
+  </section>
+
+  <section>
+    <h2 class="sec">API contract</h2>
+    <p class="take">Accounts are stored as facts, and the API returns those facts only.</p>
+    <p class="mini">Account record fields</p>
+    <div class="tblwrap">
+    <table>
+      <tr><th>Field</th><th>Type</th><th>Required</th><th>Meaning</th></tr>
+      <tr><td><code>id</code></td><td>string</td><td>server-generated</td><td>unique id (R4)</td></tr>
+      <tr><td><code>accountName</code></td><td>string</td><td>required</td><td>company name</td></tr>
+      <tr><td><code>ownerName</code></td><td>string</td><td>required</td><td>main customer contact</td></tr>
+      <tr><td><code>planSize</code></td><td>string</td><td>required</td><td>free text for now (Q7)</td></tr>
+      <tr><td><code>customerType</code></td><td><code>"new_business"</code> or <code>"existing_customer"</code></td><td>required</td><td>which onboarding path the account follows (only new_business is modeled; Q5)</td></tr>
+      <tr><td><code>authorizedContacts</code></td><td>array of non-empty strings</td><td>optional, default <code>[]</code></td><td>other people allowed to work with the OBM</td></tr>
+      <tr><td><code>startDate</code></td><td>YYYY-MM-DD</td><td>required</td><td>Day 0</td></tr>
+      <tr><td><code>welcomeSentOn</code>, <code>kickoffBookedOn</code>, <code>kickoffCallOn</code>, <code>planSharedOn</code>, <code>toolsSharedOn</code>, <code>handoffSentOn</code></td><td>YYYY-MM-DD or null</td><td>set to null on create</td><td></td></tr>
+      <tr><td><code>remindersSentOn</code></td><td>array of YYYY-MM-DD</td><td>set to <code>[]</code> on create</td><td></td></tr>
+      <tr><td><code>kickoffOutcome</code></td><td><code>"held"</code>, <code>"no_show"</code>, <code>"waived"</code>, or null</td><td>null on create</td><td>null counts as held (R19)</td></tr>
+      <tr><td><code>kickoffWaivedOn</code></td><td>YYYY-MM-DD or null</td><td>set only when waived (R21)</td><td></td></tr>
+      <tr><td><code>rescheduleOutreachSentOn</code></td><td>YYYY-MM-DD or null</td><td>only after a no-show (R20)</td><td></td></tr>
+      <tr><td><code>checkInsSentOn</code></td><td>array of YYYY-MM-DD</td><td>set to <code>[]</code> on create (R22)</td><td></td></tr>
+    </table>
+    </div>
+    <p class="mini" style="margin-top:14px">Endpoints</p>
+    <div class="tblwrap">
+    <table>
+      <tr><th>Endpoint</th><th>Response</th><th>Covers</th></tr>
+      <tr><td><code>GET /api/accounts</code></td><td>200</td><td>R1</td></tr>
+      <tr><td><code>GET /api/accounts/{id}</code></td><td>200 or 404</td><td>R2, R3</td></tr>
+      <tr><td><code>POST /api/accounts</code></td><td>201, or 400 for invalid fields or a non-JSON body</td><td>R4, R5, R17</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section>
+    <h2 class="sec">Decisions</h2>
+    <p class="take">Four decisions shape the build most; ten more are listed below them.</p>
+    <div class="cards">
+      <div class="card chosen"><b>Chosen: Relative chain, not fixed days.</b>Chose due dates computed from the previous event over a fixed calendar. Because the owner's experience is that most touchpoints are triggered by the one before (call → plan the next day → tools a week later), and a late call is exactly what pushes accounts past 30 days. Consequence: a single late step visibly delays everything after it, which is the slip the tool exists to show.</div>
+      <div class="card rejected"><b>Rejected: a fixed calendar</b>("Day 7 = check-in").</div>
+
+      <div class="card chosen"><b>Chosen: Store facts, derive status.</b>Chose storing event dates over storing a day number, due dates, or a health color. Because derived values go stale overnight, and keeping them updated by hand is the spreadsheet chore this replaces. Consequence: every page that shows status calls the one schedule module; the API returns stored facts only. <em>(amended 2026-11-18: review F7; originally said every endpoint calls it.)</em></div>
+      <div class="card rejected"><b>Rejected: a day number, due dates, or a health color.</b></div>
+
+      <div class="card chosen"><b>Chosen: Read tickets, never rebuild them.</b>Chose a TicketSource interface (fake now, Zendesk REST later) over building ticketing into the app. Because support already runs on Zendesk. Consequence: the page fetches counts and passes them into the schedule, so the schedule stays pure and the Zendesk version swaps in without touching it. <em>(amended 2026-11-18: review F1; the schedule takes the count as a parameter.)</em></div>
+      <div class="card rejected"><b>Rejected: building ticketing into the app.</b></div>
+
+      <div class="card chosen"><b>Chosen: Rows are touchpoints, health is per account.</b>Chose one Due today row per due touchpoint, sorted by days overdue, over one row per account grouped by color. Because an OBM works through tasks, and an account can owe two things at once. Consequence: the row shows the touchpoint's own overdue count; the account's health color appears beside it. <em>(added 2026-11-18: review F4.)</em></div>
+      <div class="card rejected"><b>Rejected: one row per account grouped by color.</b></div>
+    </div>
+
+    <details>
+      <summary>Other decisions: D3-D5, D7-D10, D12-D14</summary>
+      <ul>
+        <li><b>Day 0 is the start date.</b> Chose Day 0 over Day 1, because the only work on the first day is opening the account and sending the welcome.</li>
+        <li><b>One OBM's own book.</b> Chose a personal tool over a team-wide view.</li>
+        <li><b>In-memory store first.</b> Chose a module-level array over a database for this slice, to learn and test the API shape before adding persistence. <em>(amended 2026-11-18: review F11.)</em></li>
+        <li><b>API as Next.js route handlers.</b> Chose route handlers in the same app over a separate backend service.</li>
+        <li><b>Server-generated ids.</b> Chose ids created by the server (<code>crypto.randomUUID()</code>) over ids sent by the client, because the server is the only place that can guarantee two accounts never share an id. <em>(amended 2026-11-18: review F12, reason added.)</em></li>
+        <li><b>One fixed time zone.</b> Chose America/Chicago for deciding "today" over per-user time zones, because there is one user in this slice.</li>
+        <li><b>Vitest for tests.</b> Chose Vitest over Jest because it handles TypeScript and ES modules with little setup and has a Next.js guide.</li>
+        <li><b>Reminders have no cap; red means escalate.</b> Chose reminders every 3 days with no limit over stopping after 2, because the owner says outreach continues while the OBM escalates to the Account Manager and team lead. <em>(added 2026-11-18: owner amendment.)</em></li>
+        <li><b>An unrecorded call outcome counts as held.</b> Chose "held unless marked otherwise" over waiting for the OBM to record an outcome, because a forgotten entry should not silently stall T4 and everything after it. <em>(added 2026-11-18: owner amendment.)</em></li>
+        <li><b>Check-ins only fill silences.</b> Chose a check-in only when no other touchpoint is due within the 7 days over a fixed weekly check-in, because a planned touchpoint already counts as contact. <em>(added 2026-11-18: owner amendment.)</em></li>
+      </ul>
+    </details>
+  </section>
+
+  <section>
+    <h2 class="sec">Out of scope</h2>
+    <p class="take">Eleven things are deliberately left out of this slice.</p>
+    <ul>
+      <li>A per-account timeline page (<code>/accounts/[id]</code>) showing all of an account's touchpoints — slice 2; the schedule module already computes it, so the page is display only.</li>
+      <li>Different paths by customer type — only the new-business path is modeled; existing customers adding a site get the same chain until the Lead OBM describes the difference.</li>
+      <li>Marking touchpoints complete in the app — slice 2, as the first PATCH endpoint; this slice reads seeded completion dates.</li>
+      <li>Message text and macros (editable templates or pulling Zendesk macros) — refused for now because the touchpoint list itself is not yet validated.</li>
+      <li>Sending any message, email, or Calendly link — the app tracks what is owed; the OBM still sends it.</li>
+      <li>Running an escalation (the Slack channel with the Account Manager and team lead) — the app only flags that one is needed.</li>
+      <li>Keeping a history of earlier no-shows or reschedules — only the current booking is stored (Q10).</li>
+      <li>A team view across OBMs, logins, and permissions — one user, no auth, in this slice.</li>
+      <li>A database — slice 3.</li>
+      <li>Real WP Engine or customer data of any kind.</li>
+      <li>AI-drafted check-ins and ticket summaries — later, with a human review step.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 class="sec">Open questions</h2>
+    <p class="take">Fourteen questions: four resolved, ten open, and none of the open ones blocks the build.</p>
+    <ul class="check">
+      <li class="done"><span>Q1 Where is the line for "red"?<span class="meta">resolved: <code>4+ days overdue</code>, so the usual 3-day follow-up window stays yellow (owner, 2026-11-18)</span></span></li>
+      <li><span>Q2 What counts as "not engaging"?<span class="meta">proposed default: <code>2 reminders sent, 3 more days, no call booked</code> <span class="chip">ASSUMPTION</span> · blocks: <span>no</span></span></span></li>
+      <li class="done"><span>Q3 Does slice 1 keep touchpoints read-only?<span class="meta">resolved: <code>yes; seeded completion dates, PATCH in slice 2</code> (owner, 2026-11-18)</span></span></li>
+      <li><span>Q4 Is the reminder timer 3 days?<span class="meta">proposed default: <code>3 days</code> <span class="chip">ASSUMPTION</span> confirm with the Lead OBM · blocks: <span>no</span></span></span></li>
+      <li><span>Q5 How does the path differ for an existing customer adding a site?<span class="meta">proposed default: <code>same chain</code> · blocks: <span>no</span></span></span></li>
+      <li><span>Q6 Is T1-T6 plus Reschedule outreach and Check-in the full touchpoint list, in this order?<span class="meta">proposed default: <code>yes</code> <span class="chip">ASSUMPTION</span> confirm with the Lead OBM · blocks: <span>no</span></span></span></li>
+      <li><span>Q7 What are the plan size values?<span class="meta">proposed default: <code>free text</code> · blocks: <span>no</span></span></span></li>
+      <li><span>Q8 Does any open ticket hold the handoff, or only ones the OBM flags?<span class="meta">proposed default: <code>any open ticket</code> · blocks: <span>no</span></span></span></li>
+      <li><span>Q9 Does T5 count from when T4 was completed, or from when T4 was due?<span class="meta">proposed default: <code>completed</code> · blocks: <span>no</span></span></span></li>
+      <li><span>Q10 If the kickoff call is rescheduled, does the earlier date matter?<span class="meta">proposed default: <code>no; store only the latest call date</code> · blocks: <span>no</span></span></span></li>
+      <li class="done"><span>Q11 Is a call assumed held once its date passes?<span class="meta">resolved: <code>only when no outcome is recorded; no-show and waived are explicit outcomes (R19-R21)</code> (owner, 2026-11-18)</span></span></li>
+      <li class="done"><span>Q12 Are 2 reminders the real cap?<span class="meta">resolved: <code>no cap; outreach continues every 3 days, and after 2 unanswered reminders the OBM escalates to the Account Manager and team lead</code> (owner, 2026-11-18)</span></span></li>
+      <li><span>Q13 Is "never a week without contact" a real rule, and is 7 days the number?<span class="meta">proposed default: <code>yes, 7 days</code> <span class="chip">ASSUMPTION</span> confirm with the Lead OBM · blocks: <span>no</span></span></span></li>
+      <li><span>Q14 After the second reminder, is every 3 days still the right cadence?<span class="meta">proposed default: <code>3 days</code> <span class="chip">ASSUMPTION</span> · blocks: <span>no</span></span></span></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2 class="sec">Risks</h2>
+    <p class="take">Three risks; the first is high and waits on the Lead OBM.</p>
+    <div class="callout stop"><span class="sev high">high</span>The touchpoint chain comes from the owner's memory of about two months as an OBM, after four years in technical onboarding. Every timing in R6, R7, R9, R19, R20, R21, and R22 is an assumption until the Lead OBM reviews it; their sample spreadsheet has not arrived yet.<br><span class="owner">Owner: Tray · validate with Lead OBM</span></div>
+    <div class="callout"><span class="sev">low</span>Accounts created by POST still vanish on a full dev server restart (hot reload is covered by D5).<br><span class="owner">Owner: Tray</span></div>
+    <div class="callout"><span class="sev">low</span>A Zendesk trial or developer account for the later TicketSource has not been confirmed to exist.<br><span class="owner">Owner: Tray</span></div>
+  </section>
+
+  <section>
+    <h2 class="sec">Full requirements</h2>
+    <p class="take">Every requirement in full, as written in the spec.</p>
+    <details>
+      <summary>All 22 requirements (when / if / then)</summary>
+      <div class="reqs"><pre>R1 [must] — List accounts
+  When a client sends GET /api/accounts
+  Then the response is 200 with a JSON array of every stored account record
+       (stored facts only; no derived schedule or health)
+
+R2 [must] — Get one account
+  When a client sends GET /api/accounts/{id}
+  If   an account has that id
+  Then the response is 200 with that stored account record as JSON
+
+R3 [must] — Unknown account
+  When a client sends GET /api/accounts/{id}
+  If   no account has that id
+  Then the response is 404 with JSON { "error": "Account &lt;id&gt; not found" }
+
+R4 [must] — Create an account
+  When a client sends POST /api/accounts with accountName, ownerName, planSize,
+       customerType, startDate, and optional authorizedContacts
+  Then the response is 201 with the stored account: a server-generated id,
+       authorizedContacts defaulting to [], remindersSentOn and checkInsSentOn
+       set to [], and every other event field (welcomeSentOn, kickoffBookedOn,
+       kickoffCallOn, kickoffOutcome, kickoffWaivedOn, rescheduleOutreachSentOn,
+       planSharedOn, toolsSharedOn, handoffSentOn) set to null;
+       and the account appears in the next GET /api/accounts
+
+R5 [must] — Reject an invalid account
+  When a client sends POST /api/accounts with a JSON body
+  If   a required field is missing or an empty string, startDate is not a real
+       YYYY-MM-DD date, customerType is not "new_business" or "existing_customer",
+       or authorizedContacts is present but is not an array of non-empty strings
+  Then the response is 400 with JSON { "error": "&lt;message naming the field&gt;" }
+       and nothing is stored
+
+R6 [must] — Due dates follow the chain
+  When the app computes an account's schedule
+  Then T1 Welcome is due on the start date (Day 0); T4 Plan and next steps is due
+       1 day after the kickoff call date once that date is today or past and the
+       call was not a no-show, or 1 day after the call was waived (R21);
+       T5 Tools and walkthrough is due 7 days after T4 was completed;
+       T6 Support handoff is due 7 days after T5 was completed;
+       a touchpoint whose triggering event has not happened shows "not yet scheduled"
+
+R7 [must] — Reminders while waiting on the customer
+  When the loop is waiting on the customer: the anchor has been sent, there is
+       no current booking, and the call is not waived
+       (anchor = rescheduleOutreachSentOn if set, otherwise welcomeSentOn;
+       current booking = kickoffBookedOn is set and kickoffOutcome is not
+       "no_show"; after a no-show the loop does not run until
+       rescheduleOutreachSentOn is set, so only Reschedule outreach is due)
+  Then T2 Reminder is due 3 days after the anchor, and again 3 days after each
+       reminder sent, with no limit, counting only reminders in remindersSentOn
+       dated on or after the anchor; after the second such reminder the account
+       also turns red under R9 so the OBM escalates
+       (amended 2026-11-18: owner says outreach continues past 2 reminders)
+
+R8 [must] — Due today list
+  When the OBM opens the Due today page at /
+  Then they see one row per touchpoint that is due today or overdue, each row
+       showing the account name, the touchpoint name, days overdue (0 = due today),
+       and the account's health text from R14; plus one row per account that is red
+       for not responding, showing touchpoint "Escalate to Account Manager and
+       team lead" and the status "Red · no response after 2 reminders"; that row
+       clears once there is a current booking or the call is waived
+
+R9 [must] — Health status
+  When the app computes an account's health
+  Then it is red if its most overdue touchpoint is 4 or more days overdue, or if
+       2 reminders counted under R7 have gone out and 3 more days have passed
+       while the loop is still waiting on the customer (no current booking and
+       not waived, as R7 defines it);
+       yellow if its most overdue touchpoint is 1-3 days overdue; otherwise green
+       (a touchpoint due today does not change health)
+
+R10 [should] — Most overdue first
+  When the Due today list has rows
+  Then rows sort by days overdue, highest first; ties sort by account name A-Z;
+       "not responding" rows sort above all others, A-Z among themselves
+
+R11 [should] — Handoff waits on open issues
+  When T6 Support handoff would be due
+  If   openTicketCount is 1 or more
+  Then T6 shows "on hold: &lt;n&gt; open tickets" instead of being due, and does not
+       count as overdue
+
+R12 [must] — Ticket counts from a ticket source
+  When the Due today page loads
+  Then it asks a TicketSource for each account's open tickets and passes the
+       count into computeSchedule (null when unavailable, see R16); in this slice the source is a fake returning
+       seeded sample tickets keyed to the seed account ids, so accounts created
+       by POST have 0 tickets
+
+R13 [must] — "Today" is the OBM's date
+  When the app decides what is due today
+  Then todayInChicago(now) returns the calendar date in America/Chicago, so
+       2026-11-19T03:00:00Z (9 PM on the 18th in Chicago) counts as 2026-11-18
+
+R14 [should] — Status is readable without color
+  When a health status is shown
+  Then it appears as text as well as color: "Red · 4 days overdue",
+       "Red · no response after 2 reminders", "Yellow · 2 days overdue", "Green";
+       if an account is red for both reasons, the no-response text is shown
+
+R15 [must] — Sample data only
+  When the app ships seed accounts or seed tickets
+  Then every company, person, and ticket in them is invented; no real customer data
+
+R16 [must] — Ticket source unavailable
+  When the Due today page asks the TicketSource for an account's tickets
+  If   the source throws or does not answer within 3 seconds
+  Then fetchTicketCounts returns null for that account, T6 shows "tickets unavailable"
+       instead of being due or on hold, and the rest of the page still renders
+
+R17 [must] — Body is not JSON
+  When a client sends POST /api/accounts
+  If   the body cannot be parsed as JSON
+  Then the response is 400 with JSON { "error": "Request body must be JSON" }
+       and nothing is stored
+
+R18 [must] — Nothing due
+  When the OBM opens the Due today page
+  If   no touchpoint is due today or overdue
+  Then the page shows "Nothing due today. Every account is on track."
+
+R19 [must] — Kickoff call states
+  When the app computes T3 Kickoff call
+  Then it is "waived" if kickoffOutcome is "waived"; "no-show &lt;date&gt;" if
+       kickoffOutcome is "no_show"; "not booked" while kickoffBookedOn is null;
+       "booked for &lt;date&gt;" while kickoffCallOn is in the future; and "held &lt;date&gt;"
+       once kickoffCallOn is today or past (kickoffOutcome "held", or null because
+       nothing was recorded); T3 is never itself due or overdue (the customer books
+       it; the OBM's work while waiting is T2 Reminder); kickoffBookedOn and
+       kickoffCallOn are always both null or both set; kickoffWaivedOn is set
+       exactly when kickoffOutcome is "waived"; rescheduleOutreachSentOn is set
+       only when kickoffOutcome is "no_show"; seed validation rejects a record
+       that breaks any of these
+       (amended 2026-11-18: no-show and waived states added; an unrecorded
+       outcome still counts as held so a forgotten entry never stalls T4)
+
+R20 [must] — Kickoff no-show
+  When kickoffOutcome is "no_show"
+  Then a "Reschedule outreach" touchpoint is due 1 day after kickoffCallOn;
+       once it is sent, the account counts as having no current booking and the
+       R7 reminder loop restarts from rescheduleOutreachSentOn; when the customer
+       rebooks, kickoffBookedOn and kickoffCallOn hold the new dates and
+       kickoffOutcome returns to null, so T4 and everything after it follow the
+       new call
+
+R21 [must] — Kickoff waived
+  When kickoffOutcome is "waived"
+  Then no reminder is due, T3 shows "waived", and T4 Plan and next steps is due
+       1 day after kickoffWaivedOn
+
+R22 [should] — No week without contact
+  When 7 days have passed since the last date anything was sent to or held with
+       the customer (welcome, reminders, reschedule outreach, a held call, plan,
+       tools, earlier check-ins)
+  If   no other touchpoint for the account is due on or before that seventh day,
+       and T6 Support handoff has not been sent
+  Then a "Check-in" touchpoint is due on the seventh day; sending it is recorded
+       in checkInsSentOn</pre></div>
+    </details>
+  </section>
+
+  <footer>
+    <span>Canonical source: <code>specs/acc-01-account-timeline/spec.md</code> · This is a generated view — edit the md, not this file.</span>
+  </footer>
+
+</div>
+</body>
+</html>
