@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# OBM Daybook
 
-## Getting Started
+What I owe which customer today, and who's slipping.
 
-First, run the development server:
+Transitioning from Technical Onboarding to Onboarding was rough. Here's the tool I wish I'd had.
+
+An Onboarding Manager (OBM) guides many new customers through their first weeks at once. Each account moves through 
+a chain of touchpoints (welcome, reminders, kickoff call, plan, tools walkthrough, support handoff), and most 
+deadlines are counted from the step before. One late reply pushes everything after it. Tracked by hand in a 
+spreadsheet (or worse yet, not tracked at all in my case), that's easy to miss. This app's goal is to answer one 
+question each morning: **what do I owe which customer today, and who is slipping?**
+
+## Status
+
+Slice 1, in progress. Data is in memory and resets when the server restarts. All sample accounts are invented.
+
+- [x] Accounts API: list, get one, create with validation
+- [ ] Schedule: due dates, overdue counts, and health (green / yellow / red) calculated from the dates things happened
+- [ ] "Due today" page, most overdue first
+- [ ] Support ticket counts from a ticket source (a fake now, Zendesk later)
+
+## How it's built
+
+- **Next.js (App Router) + TypeScript + Tailwind**
+- **Spec first.** Before any code, the feature was written up as a spec with numbered requirements (R1 to R22), decisions, and open questions, then reviewed by a fresh-context AI reviewer until it passed. Commits cite the requirement they implement. Spec: [`specs/acc-01-account-timeline/spec.md`](specs/acc-01-account-timeline/spec.md).
+- The spec workflow uses [Rob Ruiz's spec skills](https://github.com/robruiz/rob-ruiz-skills) (MIT), adapted for Claude Code in `.claude/skills/`.
+- **Store facts, derive status.** An account stores only the dates things happened. Due dates and health are calculated each time, so nothing stored can go stale.
+
+## API
+
+| Method | Path | Result |
+|---|---|---|
+| GET | `/api/accounts` | 200, all accounts |
+| GET | `/api/accounts/{id}` | 200, or 404 if not found |
+| POST | `/api/accounts` | 201 with the stored account, or 400 naming the bad field |
+
+## Run it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then, in another terminal:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+curl localhost:3000/api/accounts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+curl -i -X POST localhost:3000/api/accounts \
+  -H "Content-Type: application/json" \
+  -d '{"accountName":"Lakeside Pottery","planSize":"Small","customerType":"new_business","startDate":"2026-11-20","owner":{"name":"Pat Lee","email":"pat@example.com"}}'
+```
