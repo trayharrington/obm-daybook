@@ -11,3 +11,12 @@ export const defaultRules = {
   yellowAtDaysOverdue: 1, // R9
   redAtDaysOverdue: 4 // R9
 } as const
+
+export function todayInChicago(now: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(now)
+}
