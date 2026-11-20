@@ -20,3 +20,8 @@ export function todayInChicago(now: Date): string {
     day: "2-digit",
   }).format(now)
 }
+export function addDays(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const updatedDate = new Date(Date.UTC(year, month - 1, day + days));
+  return updatedDate.toISOString().slice(0, 10);
+}
