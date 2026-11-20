@@ -83,9 +83,9 @@ export async function POST(request: Request) {
   }
   const account: Account = {
     id: crypto.randomUUID(),
-    accountName: body.accountName,
+    accountName: body.accountName.trim(),
     owner: normalizeContact(body.owner as Contact),
-    planSize: body.planSize,
+    planSize: body.planSize.trim(),
     customerType: body.customerType,
     authorizedContacts: ((body.authorizedContacts ?? []) as Contact[]).map(normalizeContact),
     startDate: body.startDate,
