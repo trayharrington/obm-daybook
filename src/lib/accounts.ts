@@ -70,10 +70,14 @@ export const accounts: Account[] = [
     handoffSentOn: null
   }
 ]
-
 export function getAccounts(): Account[] {
   return accounts;
+}
+
+export function addAccount(account: Account): void {
+  accounts.push(account);
 }
 export function getAccountById(id: string): Account | undefined {
   return accounts.find(account => account.id === id);
 }
+

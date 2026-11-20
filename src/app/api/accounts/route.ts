@@ -1,6 +1,6 @@
-import {getAccounts} from "@/lib/accounts";
+import { Account, Contact, addAccount, getAccounts } from "@/lib/accounts";
 
-function isNonEmptyString(string: unknown): boolean {
+function isNonEmptyString(string: unknown): string is string {
   return (typeof string === "string" && string.trim() !== "");
 }
 
@@ -20,13 +20,17 @@ function validateContact(contact: unknown, label: string): string | null {
   }
   return null
 }
-
+function normalizeContact(contact: Contact): Contact {
+  return {
+    name: contact.name.trim(),
+    email: contact.email.trim().toLowerCase(),
+  };
+}
 function isValidEmail(email: unknown): boolean {
   const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return typeof email === "string" && regex.test(email.trim());
 }
-
-function isValidDate(date: unknown): boolean {
+function isValidDate(date: unknown): date is string {
   const regex = /^\d{4}-\d{2}-\d{2}$/;
 
   // Check correct shape
@@ -77,5 +81,26 @@ export async function POST(request: Request) {
       return Response.json({error: contactError}, {status: 400})
     }
   }
-  return Response.json(body, {status: 201});
+  const account: Account = {
+    id: crypto.randomUUID(),
+    accountName: body.accountName,
+    owner: normalizeContact(body.owner as Contact),
+    planSize: body.planSize,
+    customerType: body.customerType,
+    authorizedContacts: ((body.authorizedContacts ?? []) as Contact[]).map(normalizeContact),
+    startDate: body.startDate,
+    welcomeSentOn: null,
+    kickoffBookedOn: null,
+    kickoffCallOn: null,
+    planSharedOn: null,
+    toolsSharedOn: null,
+    handoffSentOn: null,
+    remindersSentOn: [],
+    kickoffOutcome: null,
+    kickoffWaivedOn: null,
+    rescheduleOutreachSentOn: null,
+    checkInsSentOn: []
+  };
+  addAccount(account);
+  return Response.json(account, { status: 201 });
 }
