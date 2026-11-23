@@ -7,7 +7,7 @@ Transitioning from Technical Onboarding to Onboarding was rough. Here's the tool
 An Onboarding Manager (OBM) guides many new customers through their first weeks at once. Each account moves through 
 a chain of touchpoints (welcome, reminders, kickoff call, plan, tools walkthrough, support handoff), and most 
 deadlines are counted from the step before. One late reply pushes everything after it. Tracked by hand in a 
-spreadsheet (or worse yet, not tracked at all in my case), that's easy to miss. This app's goal is to answer one 
+spreadsheet (or in my case, mostly in my head), that's easy to miss. This app's goal is to answer one 
 question each morning: **what do I owe which customer today, and who is slipping?**
 
 ## Status
